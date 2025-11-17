@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: nfl-dashboard
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python setup_db.py && uvicorn src.frontend.app:app --host 0.0.0.0 --port $PORT"
+    plan: free

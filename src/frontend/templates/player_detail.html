@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ player.full_name if player else 'Player' }} - NFL Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-football-ball"></i> NFL Dashboard</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Leaders</a>
+                <a class="nav-link" href="/players">Players</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        {% if player %}
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    {{ player.full_name }}
+                    <span class="badge 
+                        {% if player.position == 'QB' %}bg-success
+                        {% elif player.position == 'RB' %}bg-warning text-dark
+                        {% elif player.position == 'WR' %}bg-info
+                        {% elif player.position == 'TE' %}bg-primary
+                        {% elif player.position in ['DE', 'LB', 'DT'] %}bg-danger
+                        {% elif player.position == 'K' %}bg-secondary
+                        {% else %}bg-light text-dark{% endif %} fs-6">
+                        {{ player.position }}
+                    </span>
+                    {% if position_rank %}
+                    <span class="badge bg-info fs-6 ms-2">
+                        #{{ position_rank }} {{ player.position }}
+                    </span>
+                    {% endif %}
+                </h1>
+                {% if total_fantasy and position_rank %}
+                <div class="alert alert-info">
+                    <strong>Fantasy Ranking:</strong> #{{ position_rank }} among {{ player.position }}s with {{ "%.1f"|format(total_fantasy or 0) }} fantasy points
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Season Stats Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6>Passing</h6>
+                        <p>Yards: <strong>{{ stats|selectattr('passing_yards')|map(attribute='passing_yards')|sum|round(0)|int or 0 }}</strong></p>
+                        <p>TDs: <strong>{{ stats|selectattr('pass_tds')|map(attribute='pass_tds')|sum|int or 0 }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Rushing</h6>
+                        <p>Yards: <strong>{{ stats|selectattr('rushing_yards')|map(attribute='rushing_yards')|sum|round(0)|int or 0 }}</strong></p>
+                        <p>TDs: <strong>{{ stats|selectattr('rush_tds')|map(attribute='rush_tds')|sum|int or 0 }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Receiving</h6>
+                        <p>Yards: <strong>{{ stats|selectattr('receiving_yards')|map(attribute='receiving_yards')|sum|round(0)|int or 0 }}</strong></p>
+                        <p>TDs: <strong>{{ stats|selectattr('rec_tds')|map(attribute='rec_tds')|sum|int or 0 }}</strong></p>
+                        <p>Receptions: <strong>{{ stats|selectattr('receptions')|map(attribute='receptions')|sum|int or 0 }}</strong></p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Defense</h6>
+                        <p>Sacks: <strong>{{ stats|selectattr('sacks')|map(attribute='sacks')|sum|round(1) or 0 }}</strong></p>
+                        <p>Tackles: <strong>{{ stats|selectattr('tackles')|map(attribute='tackles')|sum|int or 0 }}</strong></p>
+                        <p>INTs: <strong>{{ stats|selectattr('interceptions')|map(attribute='interceptions')|sum|int or 0 }}</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Game-by-Game Stats ({{ stats|length }} games)</h5>
+            </div>
+            <div class="card-body">
+                {% if stats %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Week</th>
+                                <th>Team</th>
+                                <th>Pass Yds</th>
+                                <th>Pass TDs</th>
+                                <th>Rush Yds</th>
+                                <th>Rush TDs</th>
+                                <th>Rec Yds</th>
+                                <th>Rec</th>
+                                <th>Rec TDs</th>
+                                <th>Sacks</th>
+                                <th>Tackles</th>
+                                <th>INTs</th>
+                                <th>FGM</th>
+                                <th>Fantasy</th>
+                                <th>Fantasy PPR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in stats %}
+                            <tr>
+                                <td><strong>{{ stat.week or '-' }}</strong></td>
+                                <td>{{ stat.team or '-' }}</td>
+                                <td>{{ "%.0f"|format(stat.passing_yards or 0) }}</td>
+                                <td>{{ stat.pass_tds or 0 }}</td>
+                                <td>{{ "%.0f"|format(stat.rushing_yards or 0) }}</td>
+                                <td>{{ stat.rush_tds or 0 }}</td>
+                                <td>{{ "%.0f"|format(stat.receiving_yards or 0) }}</td>
+                                <td>{{ stat.receptions or 0 }}</td>
+                                <td>{{ stat.rec_tds or 0 }}</td>
+                                <td>{{ "%.1f"|format(stat.sacks or 0) }}</td>
+                                <td>{{ stat.tackles or 0 }}</td>
+                                <td>{{ stat.interceptions or 0 }}</td>
+                                <td>{{ stat.fgm or 0 }}</td>
+                                <td>{{ "%.1f"|format(stat.fantasy_points or 0) }}</td>
+                                <td>{{ "%.1f"|format(stat.fantasy_points_ppr or 0) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No game stats available for this player.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <h4>Player Not Found</h4>
+            <p>The requested player could not be found.</p>
+            <a href="/players" class="btn btn-primary">Back to Players</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
