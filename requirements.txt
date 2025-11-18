@@ -1,8 +1,2 @@
 fastapi
 uvicorn
-sqlmodel
-nflreadpy
-polars
-psycopg2-binary
-jinja2
-python-multipart
